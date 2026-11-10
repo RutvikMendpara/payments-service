@@ -1,0 +1,107 @@
+server:
+  port: 8082
+  shutdown: graceful
+
+spring:
+  application:
+    name: settlement-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/settlement_db}
+    username: ${DB_USER:settlement}
+    password: ${DB_PASSWORD:settlement}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    consumer:
+      group-id: settlement-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+    listener:
+      ack-mode: record
+      concurrency: 3
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${JWK_SET_URI:http://localhost:8180/realms/payments/protocol/openid-connect/certs}
+          issuer-uri: ${JWT_ISSUER:http://localhost:8180/realms/payments}
+      client:
+        registration:
+          ledger:
+            provider: keycloak
+            client-id: settlement-service
+            client-secret: ${LEDGER_CLIENT_SECRET:settlement-secret}
+            authorization-grant-type: client_credentials
+            scope: ledger.post
+        provider:
+          keycloak:
+            token-uri: ${TOKEN_URI:http://localhost:8180/realms/payments/protocol/openid-connect/token}
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+ledger:
+  base-url: ${LEDGER_URL:http://localhost:8081}
+  connect-timeout: 1s
+  read-timeout: 3s
+
+settlement:
+  cash-asset: INR
+  trades-topic: trades.executed
+  retry:
+    initial-interval: 500ms
+    multiplier: 2.0
+    max-interval: 10s
+    max-retries: 6
+  sweeper:
+    interval: 30s
+    pending-age: 60s
+
+resilience4j:
+  retry:
+    instances:
+      ledger:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        retry-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - com.rutvik.payments.settlement.ledger.LedgerUnavailableException
+  circuitbreaker:
+    instances:
+      ledger:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - com.rutvik.payments.settlement.ledger.LedgerUnavailableException
+
+outbox:
+  poll-interval: 100ms
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,circuitbreakers
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
