@@ -1,0 +1,88 @@
+{
+  "realm": "payments",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 900,
+  "clientScopes": [
+    {
+      "name": "basic",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "false", "display.on.consent.screen": "false"},
+      "protocolMappers": [
+        {
+          "name": "sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-sub-mapper",
+          "config": {"access.token.claim": "true", "introspection.token.claim": "true"}
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "protocol": "openid-connect",
+      "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"},
+      "protocolMappers": [
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {"user.attribute": "username", "claim.name": "preferred_username", "jsonType.label": "String",
+                     "id.token.claim": "true", "access.token.claim": "true", "userinfo.token.claim": "true"}
+        }
+      ]
+    },
+    {"name": "ledger.read", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
+    {"name": "ledger.write", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
+    {"name": "ledger.admin", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
+    {"name": "ledger.post", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
+    {"name": "settlement.read", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
+    {"name": "settlement.admin", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}}
+  ],
+  "clients": [
+    {
+      "clientId": "settlement-service",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "settlement-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "defaultClientScopes": ["basic", "ledger.post"],
+      "optionalClientScopes": []
+    },
+    {
+      "clientId": "ops-cli",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "ops-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "defaultClientScopes": ["basic", "ledger.read", "ledger.write", "ledger.admin", "settlement.read", "settlement.admin"],
+      "optionalClientScopes": []
+    },
+    {
+      "clientId": "dashboard",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {"pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:3000/*"},
+      "defaultClientScopes": ["basic", "profile", "ledger.read", "settlement.read", "settlement.admin"],
+      "optionalClientScopes": []
+    }
+  ],
+  "users": [
+    {
+      "username": "ops",
+      "enabled": true,
+      "email": "ops@example.com",
+      "emailVerified": true,
+      "firstName": "Ops",
+      "lastName": "User",
+      "credentials": [{"type": "password", "value": "ops", "temporary": false}]
+    }
+  ]
+}
