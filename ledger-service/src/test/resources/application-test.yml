@@ -1,0 +1,6 @@
+outbox:
+  relay:
+    enabled: false
+logging:
+  level:
+    org.apache.kafka: warn
