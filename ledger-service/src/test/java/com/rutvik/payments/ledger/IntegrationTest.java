@@ -73,7 +73,7 @@ public abstract class IntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbc.sql("truncate ledger_entries, transactions, balances, accounts, outbox restart identity cascade").update();
+        jdbc.sql("truncate recon_mismatches, recon_runs, ledger_entries, transactions, balances, accounts, outbox restart identity cascade").update();
     }
 
     protected long openAccount(String owner, String asset) {

@@ -28,10 +28,19 @@ spring:
           issuer-uri: ${JWT_ISSUER:http://localhost:8180/realms/payments}
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
 
 ledger:
   posting:
     max-attempts: 40
+
+reconciliation:
+  cron: "0 0 2 * * *"
+  chunk-size: 500
 
 outbox:
   poll-interval: 100ms
