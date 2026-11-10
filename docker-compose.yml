@@ -133,6 +133,11 @@ services:
     depends_on:
       settlement-service: {condition: service_healthy}
 
+  dashboard:
+    build: dashboard
+    ports: ["3000:80"]
+    depends_on: [ledger-service, settlement-service]
+
   prometheus:
     image: prom/prometheus:v3.5.0
     volumes: [./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro]
