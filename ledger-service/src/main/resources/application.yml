@@ -1,0 +1,44 @@
+server:
+  port: 8081
+  shutdown: graceful
+
+spring:
+  application:
+    name: ledger-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/ledger_db}
+    username: ${DB_USER:ledger}
+    password: ${DB_PASSWORD:ledger}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+
+ledger:
+  posting:
+    max-attempts: 40
+
+outbox:
+  poll-interval: 100ms
+  batch-size: 200
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
