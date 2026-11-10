@@ -79,16 +79,19 @@ public class OutboxRelay {
             return 0;
         }
 
-        List<CompletableFuture<SendResult<String, String>>> sends = new ArrayList<>(rows.size());
-        for (OutboxRow row : rows) {
-            ProducerRecord<String, String> record = new ProducerRecord<>(row.topic(), row.key(), row.payload());
-            record.headers().add("eventId", row.eventId().toString().getBytes(StandardCharsets.UTF_8));
-            record.headers().add("eventType", row.eventType().getBytes(StandardCharsets.UTF_8));
-            sends.add(kafka.send(record));
-        }
         // Any failure throws and rolls back, so none of the batch is marked published.
         try {
+            List<CompletableFuture<SendResult<String, String>>> sends = new ArrayList<>(rows.size());
+            for (OutboxRow row : rows) {
+                ProducerRecord<String, String> record = new ProducerRecord<>(row.topic(), row.key(), row.payload());
+                record.headers().add("eventId", row.eventId().toString().getBytes(StandardCharsets.UTF_8));
+                record.headers().add("eventType", row.eventType().getBytes(StandardCharsets.UTF_8));
+                sends.add(kafka.send(record));
+            }
             CompletableFuture.allOf(sends.toArray(CompletableFuture[]::new)).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("interrupted while publishing outbox", e);
         } catch (Exception e) {
             throw new IllegalStateException("kafka publish failed, batch will be retried", e);
         }
