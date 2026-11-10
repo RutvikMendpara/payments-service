@@ -21,6 +21,7 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.POST, "/settlements/*/retry", "/reconciliation/runs")
                         .hasAuthority("SCOPE_settlement.admin")
+                        .requestMatchers(HttpMethod.POST, "/fx-transfers").hasAuthority("SCOPE_fx.write")
                         .requestMatchers(HttpMethod.GET, "/**").hasAuthority("SCOPE_settlement.read")
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(o -> o.jwt(Customizer.withDefaults()))

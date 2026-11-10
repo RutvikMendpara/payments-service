@@ -36,7 +36,8 @@
     {"name": "ledger.admin", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
     {"name": "ledger.post", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
     {"name": "settlement.read", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
-    {"name": "settlement.admin", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}}
+    {"name": "settlement.admin", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}},
+    {"name": "fx.write", "protocol": "openid-connect", "attributes": {"include.in.token.scope": "true", "display.on.consent.screen": "false"}}
   ],
   "clients": [
     {
@@ -58,7 +59,7 @@
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
-      "defaultClientScopes": ["basic", "ledger.read", "ledger.write", "ledger.admin", "settlement.read", "settlement.admin"],
+      "defaultClientScopes": ["basic", "ledger.read", "ledger.write", "ledger.admin", "settlement.read", "settlement.admin", "fx.write"],
       "optionalClientScopes": []
     },
     {
