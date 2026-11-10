@@ -38,6 +38,7 @@ spring:
 
 ledger:
   posting:
+    locking: ${LEDGER_LOCKING:OPTIMISTIC}
     max-attempts: 40
 
 reconciliation:

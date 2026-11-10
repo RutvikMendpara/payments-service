@@ -30,10 +30,14 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  * The only way money moves. Every call either commits one balanced transaction or nothing.
  *
- * Concurrency: balances are read, checked, then updated with "where version = ?". If someone
- * else got there first the update hits 0 rows, the whole DB transaction rolls back and we
- * retry from the top with jittered backoff. Account rows are always updated in id order so
- * two postings touching the same pair of accounts can't deadlock.
+ * Concurrency (ledger.posting.locking):
+ *  - OPTIMISTIC (default): balances are read, checked, then updated with "where version = ?".
+ *    If someone else got there first the update hits 0 rows, the DB transaction rolls back and
+ *    we retry from the top with jittered backoff. Cheap when accounts rarely collide.
+ *  - PESSIMISTIC: balances are read with SELECT ... FOR UPDATE, so writers to the same account
+ *    queue on the row lock instead of failing and retrying. Better for a few very hot accounts.
+ * Either way account rows are locked/updated in id order, so two postings touching the same
+ * pair of accounts can't deadlock.
  *
  * Idempotency: the key is a unique column on transactions. A repeat with the same body gets
  * the stored result back; a repeat with a different body is a 409. Rejections are stored too,
@@ -49,17 +53,22 @@ public class PostingService {
     private final AccountRepository accounts;
     private final OutboxWriter outbox;
     private final int maxAttempts;
+    private final LockingMode locking;
     private final Counter conflicts;
     private final MeterRegistry meters;
 
+    public enum LockingMode { OPTIMISTIC, PESSIMISTIC }
+
     public PostingService(JdbcClient jdbc, TransactionTemplate tx, AccountRepository accounts, OutboxWriter outbox,
-                          MeterRegistry meters, @Value("${ledger.posting.max-attempts:40}") int maxAttempts) {
+                          MeterRegistry meters, @Value("${ledger.posting.max-attempts:40}") int maxAttempts,
+                          @Value("${ledger.posting.locking:OPTIMISTIC}") LockingMode locking) {
         this.jdbc = jdbc;
         this.tx = tx;
         this.accounts = accounts;
         this.outbox = outbox;
         this.meters = meters;
         this.maxAttempts = maxAttempts;
+        this.locking = locking;
         this.conflicts = Counter.builder("ledger.posting.conflicts")
                 .description("optimistic lock conflicts that caused a retry").register(meters);
     }
@@ -171,7 +180,9 @@ public class PostingService {
 
     private Map<Long, BalanceRow> loadBalances(Set<Long> ids) {
         Map<Long, BalanceRow> rows = new HashMap<>();
-        jdbc.sql("select account_id, balance, allow_negative, version from balances where account_id in (:ids)")
+        String sql = "select account_id, balance, allow_negative, version from balances where account_id in (:ids)"
+                + (locking == LockingMode.PESSIMISTIC ? " order by account_id for update" : "");
+        jdbc.sql(sql)
                 .param("ids", ids)
                 .query((rs, i) -> new BalanceRow(rs.getLong(1), rs.getLong(2), rs.getBoolean(3), rs.getLong(4)))
                 .list()

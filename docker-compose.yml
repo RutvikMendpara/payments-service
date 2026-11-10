@@ -3,6 +3,7 @@ name: payments
 x-service-env: &service-env
   KAFKA_BOOTSTRAP: kafka:19092
   OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+  TRACING_SAMPLE_RATE: ${TRACING_SAMPLE_RATE:-0.1}
   JWK_SET_URI: http://keycloak:8080/realms/payments/protocol/openid-connect/certs
   JWT_ISSUER: http://localhost:8180/realms/payments
 
@@ -85,6 +86,7 @@ services:
     environment:
       <<: *service-env
       DB_URL: jdbc:postgresql://ledger-db:5432/ledger_db
+      LEDGER_LOCKING: ${LEDGER_LOCKING:-OPTIMISTIC}
     ports: ["8081:8081"]
     depends_on:
       ledger-db: {condition: service_healthy}

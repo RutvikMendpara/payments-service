@@ -1,11 +1,16 @@
 package com.rutvik.payments.ledger;
 
+import com.rutvik.payments.common.outbox.OutboxWriter;
 import com.rutvik.payments.ledger.posting.Leg;
 import com.rutvik.payments.ledger.posting.PostingRequest;
 import com.rutvik.payments.ledger.posting.PostingResult;
+import com.rutvik.payments.ledger.posting.PostingService;
 import com.rutvik.payments.ledger.posting.PostingStatus;
 import com.rutvik.payments.ledger.posting.TransactionType;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +23,12 @@ import java.util.concurrent.Future;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ConcurrencyTest extends IntegrationTest {
+
+    @Autowired
+    TransactionTemplate tx;
+
+    @Autowired
+    OutboxWriter outbox;
 
     @Test
     void fiftyParallelTransfersNeverOverdraw() throws Exception {
@@ -76,6 +87,22 @@ class ConcurrencyTest extends IntegrationTest {
         assertThat(balance(bob)).isEqualTo(700);
         assertThat(count("select count(*) from transactions where idempotency_key = 'same-key'")).isEqualTo(1);
         assertThat(count("select count(*) from outbox where event_type = 'TransferCompleted'")).isEqualTo(1);
+    }
+
+    @Test
+    void pessimisticModeQueuesOnTheRowLockInsteadOfRetrying() throws Exception {
+        long source = openAccount("source", "INR");
+        long sink = openAccount("sink", "INR");
+        fund(source, "INR", 1_000_000);
+        PostingService pessimistic = new PostingService(jdbc, tx, accounts, outbox, new SimpleMeterRegistry(), 1,
+                PostingService.LockingMode.PESSIMISTIC);
+
+        // max-attempts = 1: any optimistic conflict would surface as an error here.
+        List<PostingResult> results = runTogether(50, i -> pessimistic.post("lock-" + i, transfer(source, sink, 10)));
+
+        assertThat(results).allMatch(PostingResult::posted);
+        assertThat(balance(sink)).isEqualTo(500);
+        assertThat(balance(source)).isEqualTo(1_000_000 - 500);
     }
 
     private static PostingRequest transfer(long from, long to, long amount) {

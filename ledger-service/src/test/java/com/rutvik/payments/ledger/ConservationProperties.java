@@ -76,7 +76,8 @@ class ConservationProperties {
         accounts = new AccountRepository(jdbc);
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         postings = new PostingService(jdbc, new TransactionTemplate(new JdbcTransactionManager(ds)), accounts,
-                new OutboxWriter(jdbc, mapper), new SimpleMeterRegistry(), 40);
+                new OutboxWriter(jdbc, mapper), new SimpleMeterRegistry(), 40,
+                PostingService.LockingMode.OPTIMISTIC);
     }
 
     @AfterContainer
