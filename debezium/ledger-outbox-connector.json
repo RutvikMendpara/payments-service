@@ -1,0 +1,30 @@
+{
+  "name": "ledger-outbox",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "plugin.name": "pgoutput",
+    "database.hostname": "ledger-db",
+    "database.port": "5432",
+    "database.user": "ledger",
+    "database.password": "ledger",
+    "database.dbname": "ledger_db",
+    "topic.prefix": "ledger",
+    "table.include.list": "public.outbox",
+    "slot.name": "ledger_outbox",
+    "publication.autocreate.mode": "filtered",
+    "snapshot.mode": "no_data",
+    "poll.interval.ms": "10",
+    "max.batch.size": "2048",
+    "tombstones.on.delete": "false",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "transforms": "outbox",
+    "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+    "transforms.outbox.table.field.event.id": "event_id",
+    "transforms.outbox.table.field.event.key": "event_key",
+    "transforms.outbox.table.field.event.payload": "payload",
+    "transforms.outbox.route.by.field": "topic",
+    "transforms.outbox.route.topic.replacement": "${routedByValue}",
+    "transforms.outbox.table.fields.additional.placement": "event_id:header:eventId,event_type:header:eventType"
+  }
+}

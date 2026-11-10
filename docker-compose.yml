@@ -87,6 +87,9 @@ services:
       <<: *service-env
       DB_URL: jdbc:postgresql://ledger-db:5432/ledger_db
       LEDGER_LOCKING: ${LEDGER_LOCKING:-OPTIMISTIC}
+      # set to false when Debezium (profile cdc) publishes the outbox instead
+      OUTBOX_RELAY_ENABLED: ${LEDGER_OUTBOX_RELAY:-true}
+      OUTBOX_POLL_INTERVAL: ${LEDGER_OUTBOX_POLL:-100ms}
     ports: ["8081:8081"]
     depends_on:
       ledger-db: {condition: service_healthy}
@@ -137,6 +140,26 @@ services:
     build: dashboard
     ports: ["3000:80"]
     depends_on: [ledger-service, settlement-service]
+
+  # Change-data-capture alternative to the polling relay: reads ledger outbox inserts from the
+  # WAL. Start with: LEDGER_OUTBOX_RELAY=false docker compose --profile cdc up -d
+  kafka-connect:
+    image: quay.io/debezium/connect:3.2.0.Final
+    profiles: [cdc]
+    environment:
+      BOOTSTRAP_SERVERS: kafka:19092
+      GROUP_ID: ledger-connect
+      CONFIG_STORAGE_TOPIC: connect_configs
+      OFFSET_STORAGE_TOPIC: connect_offsets
+      STATUS_STORAGE_TOPIC: connect_statuses
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_FLUSH_INTERVAL_MS: 1000
+    ports: ["8083:8083"]
+    depends_on:
+      kafka: {condition: service_healthy}
+      ledger-db: {condition: service_healthy}
 
   prometheus:
     image: prom/prometheus:v3.5.0
