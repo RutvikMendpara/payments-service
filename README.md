@@ -212,4 +212,11 @@ debezium/            CDC connector config
 scripts/             e2e, chaos, load and latency scripts
 ```
 
+## Grafana
+
 ![grafana](screenshots/grafana.png)
+
+Steady load on a fresh stack: 100 trades/s from the simulator across 200 traders, plus k6 transfers
+at 10 virtual users, for about 4 minutes. Consumer lag stays at 0 and the circuit breaker never opens.
+The higher settlement p99 in the first minute is JVM warm-up. "Outbox pending" counts events waiting
+for the next 100 ms poll.
