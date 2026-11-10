@@ -22,8 +22,11 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       properties:
         enable.idempotence: true
+    template:
+      observation-enabled: true
     listener:
       ack-mode: record
+      observation-enabled: true
       concurrency: 3
   security:
     oauth2:
@@ -114,3 +117,16 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        settlement.latency: true
+  observations:
+    enable:
+      spring.security: false
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLE_RATE:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTLP_ENDPOINT:http://localhost:4318/v1/traces}

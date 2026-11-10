@@ -17,3 +17,7 @@ resilience4j:
 logging:
   level:
     org.apache.kafka: warn
+
+management:
+  tracing:
+    enabled: false
