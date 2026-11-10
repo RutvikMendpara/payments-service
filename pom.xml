@@ -20,6 +20,7 @@
         <module>common</module>
         <module>ledger-service</module>
         <module>settlement-service</module>
+        <module>trade-simulator</module>
     </modules>
 
     <properties>

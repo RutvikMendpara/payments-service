@@ -1,0 +1,25 @@
+spring:
+  main:
+    web-application-type: none
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+
+simulator:
+  ledger-url: ${LEDGER_URL:http://localhost:8081}
+  token-uri: ${TOKEN_URI:http://localhost:8180/realms/payments/protocol/openid-connect/token}
+  client-id: ops-cli
+  client-secret: ${OPS_CLIENT_SECRET:ops-secret}
+  seed: true
+  traders: 20
+  symbols: INFY,TCS,HDFCBANK
+  starting-cash: 100000000   # 10 lakh rupees, in paise
+  starting-shares: 5000
+  trades: 1000
+  rate-per-second: 100
+  duplicate-percent: 5
