@@ -5,6 +5,8 @@ import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.boot.http.client.ClientHttpRequestFactorySettings;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientProviderBuilder;
@@ -17,6 +19,9 @@ import java.time.Duration;
 
 @Configuration
 public class LedgerClientConfig {
+
+    private static final AnonymousAuthenticationToken SERVICE_PRINCIPAL = new AnonymousAuthenticationToken(
+            "settlement-service", "settlement-service", AuthorityUtils.createAuthorityList("ROLE_SERVICE"));
 
     /**
      * Client-credentials manager that works off the request thread (we call the ledger from
@@ -37,6 +42,8 @@ public class LedgerClientConfig {
                                 @Value("${ledger.read-timeout:3s}") Duration readTimeout) {
         var oauth = new OAuth2ClientHttpRequestInterceptor(manager);
         oauth.setClientRegistrationIdResolver(request -> "ledger");
+        // The ledger call is made as this service, even when an operator's request triggered it.
+        oauth.setPrincipalResolver(request -> SERVICE_PRINCIPAL);
         var settings = ClientHttpRequestFactorySettings.defaults()
                 .withConnectTimeout(connectTimeout)
                 .withReadTimeout(readTimeout);
