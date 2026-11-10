@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Unit, integration and property tests (Testcontainers)
+        run: ./mvnw -B verify
+
+  e2e:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start the stack
+        run: docker compose up -d --build --wait
+      - name: Settle trades end to end and check the books
+        run: scripts/e2e.sh 500
+      - name: Logs
+        if: failure()
+        run: docker compose logs --tail=200 ledger-service settlement-service
