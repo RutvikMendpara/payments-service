@@ -1,0 +1,19 @@
+settlement:
+  retry:
+    initial-interval: 100ms
+    multiplier: 2.0
+    max-interval: 400ms
+    max-retries: 3
+  sweeper:
+    enabled: false
+    pending-age: 0s
+
+resilience4j:
+  retry:
+    instances:
+      ledger:
+        wait-duration: 50ms
+
+logging:
+  level:
+    org.apache.kafka: warn
