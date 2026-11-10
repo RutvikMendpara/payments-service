@@ -41,7 +41,7 @@ public class AccountController {
         this.postings = postings;
     }
 
-    public record OpenAccount(@NotBlank @Size(max = 64) @Pattern(regexp = "^[A-Za-z0-9_.-]+$") String ownerId,
+    public record OpenAccount(@NotBlank @Size(max = 64) @Pattern(regexp = "^[A-Za-z0-9_.:-]+$") String ownerId,
                               @NotBlank @Pattern(regexp = "^[A-Z0-9]{2,16}$") String asset) {
     }
 
