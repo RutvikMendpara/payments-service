@@ -107,6 +107,8 @@ services:
       DB_URL: jdbc:postgresql://settlement-db:5432/settlement_db
       LEDGER_URL: http://ledger-service:8081
       TOKEN_URI: http://keycloak:8080/realms/payments/protocol/openid-connect/token
+      TRADES_PARTITIONS: ${TRADES_PARTITIONS:-12}
+      CONSUMER_CONCURRENCY: ${CONSUMER_CONCURRENCY:-12}
     ports: ["8082:8082"]
     depends_on:
       settlement-db: {condition: service_healthy}

@@ -22,12 +22,12 @@ public class KafkaConfig {
 
     @Bean
     NewTopic tradesExecuted(SettlementProperties props) {
-        return TopicBuilder.name(props.tradesTopic()).partitions(3).build();
+        return TopicBuilder.name(props.tradesTopic()).partitions(props.tradesPartitions()).build();
     }
 
     @Bean
     NewTopic tradesDeadLetter(SettlementProperties props) {
-        return TopicBuilder.name(props.tradesTopic() + ".DLT").partitions(3).build();
+        return TopicBuilder.name(props.tradesTopic() + ".DLT").partitions(props.tradesPartitions()).build();
     }
 
     @Bean

@@ -9,6 +9,8 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5434/settlement_db}
     username: ${DB_USER:settlement}
     password: ${DB_PASSWORD:settlement}
+    hikari:
+      maximum-pool-size: 20
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
     consumer:
@@ -27,7 +29,8 @@ spring:
     listener:
       ack-mode: record
       observation-enabled: true
-      concurrency: 3
+      # one thread per partition; trades on different partitions settle in parallel
+      concurrency: ${CONSUMER_CONCURRENCY:12}
   security:
     oauth2:
       resourceserver:
@@ -61,6 +64,7 @@ ledger:
 settlement:
   cash-asset: INR
   trades-topic: trades.executed
+  trades-partitions: ${TRADES_PARTITIONS:12}
   retry:
     initial-interval: 500ms
     multiplier: 2.0

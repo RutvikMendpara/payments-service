@@ -8,6 +8,7 @@ import java.time.Duration;
 public record SettlementProperties(
         String cashAsset,
         String tradesTopic,
+        int tradesPartitions,
         Retry retry,
         Sweeper sweeper) {
 
