@@ -1,0 +1,34 @@
+image:
+  registry: ""          # e.g. ghcr.io/you/ ; empty for images loaded into kind
+  tag: latest
+  pullPolicy: IfNotPresent
+
+ledger:
+  replicas: 2
+  locking: OPTIMISTIC
+  resources:
+    requests: {cpu: 250m, memory: 512Mi}
+    limits: {memory: 768Mi}
+
+settlement:
+  replicas: 2
+  resources:
+    requests: {cpu: 250m, memory: 512Mi}
+    limits: {memory: 768Mi}
+
+# Postgres, Kafka and Keycloak as single pods with no persistence. Fine for kind/minikube,
+# not for anything real: point the services at managed ones and set this to false.
+infra:
+  enabled: true
+
+endpoints:
+  ledgerDb: jdbc:postgresql://ledger-db:5432/ledger_db
+  settlementDb: jdbc:postgresql://settlement-db:5432/settlement_db
+  kafka: kafka:9092
+  keycloak: http://keycloak:8080
+  issuer: http://keycloak:8080/realms/payments
+
+secrets:
+  ledgerDbPassword: ledger
+  settlementDbPassword: settlement
+  settlementClientSecret: settlement-secret

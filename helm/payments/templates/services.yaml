@@ -1,0 +1,30 @@
+{{- $e := .Values.endpoints -}}
+{{- $common := list
+      (dict "name" "KAFKA_BOOTSTRAP" "value" $e.kafka)
+      (dict "name" "JWK_SET_URI" "value" (printf "%s/realms/payments/protocol/openid-connect/certs" $e.keycloak))
+      (dict "name" "JWT_ISSUER" "value" $e.issuer)
+      (dict "name" "TRACING_SAMPLE_RATE" "value" "0")
+-}}
+{{ include "payments.service" (dict
+    "root" .
+    "name" "ledger-service"
+    "port" 8081
+    "replicas" .Values.ledger.replicas
+    "resources" .Values.ledger.resources
+    "env" (concat $common (list
+        (dict "name" "DB_URL" "value" $e.ledgerDb)
+        (dict "name" "DB_PASSWORD" "valueFrom" (dict "secretKeyRef" (dict "name" "payments" "key" "ledger-db-password")))
+        (dict "name" "LEDGER_LOCKING" "value" .Values.ledger.locking)))) }}
+---
+{{ include "payments.service" (dict
+    "root" .
+    "name" "settlement-service"
+    "port" 8082
+    "replicas" .Values.settlement.replicas
+    "resources" .Values.settlement.resources
+    "env" (concat $common (list
+        (dict "name" "DB_URL" "value" $e.settlementDb)
+        (dict "name" "DB_PASSWORD" "valueFrom" (dict "secretKeyRef" (dict "name" "payments" "key" "settlement-db-password")))
+        (dict "name" "LEDGER_URL" "value" "http://ledger-service:8081")
+        (dict "name" "TOKEN_URI" "value" (printf "%s/realms/payments/protocol/openid-connect/token" $e.keycloak))
+        (dict "name" "LEDGER_CLIENT_SECRET" "valueFrom" (dict "secretKeyRef" (dict "name" "payments" "key" "settlement-client-secret")))))) }}
