@@ -498,7 +498,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Ledger circuit breaker (settlement to ledger)",
+      "title": "Settlement to ledger calls (breaker open = 1)",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -513,7 +513,38 @@
         "defaults": {
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "breaker.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "calls/s.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -525,12 +556,12 @@
         {
           "refId": "A",
           "expr": "resilience4j_circuitbreaker_state{name=\"ledger\", state=~\"open|half_open\"}",
-          "legendFormat": "{{state}}"
+          "legendFormat": "breaker {{state}}"
         },
         {
           "refId": "B",
           "expr": "sum(rate(resilience4j_circuitbreaker_calls_seconds_count{name=\"ledger\"}[30s])) by (kind)",
-          "legendFormat": "calls {{kind}}"
+          "legendFormat": "calls/s {{kind}}"
         }
       ]
     },
