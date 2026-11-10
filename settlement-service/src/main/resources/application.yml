@@ -38,12 +38,17 @@ spring:
             client-id: settlement-service
             client-secret: ${LEDGER_CLIENT_SECRET:settlement-secret}
             authorization-grant-type: client_credentials
-            scope: ledger.post
+            scope: ledger.post,ledger.read
         provider:
           keycloak:
             token-uri: ${TOKEN_URI:http://localhost:8180/realms/payments/protocol/openid-connect/token}
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
 
 ledger:
   base-url: ${LEDGER_URL:http://localhost:8081}
@@ -61,6 +66,10 @@ settlement:
   sweeper:
     interval: 30s
     pending-age: 60s
+
+reconciliation:
+  cron: "0 30 2 * * *"
+  stuck-after: 10m
 
 resilience4j:
   retry:

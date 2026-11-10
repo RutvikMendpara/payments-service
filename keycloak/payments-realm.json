@@ -47,7 +47,7 @@
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": false,
       "directAccessGrantsEnabled": false,
-      "defaultClientScopes": ["basic", "ledger.post"],
+      "defaultClientScopes": ["basic", "ledger.post", "ledger.read"],
       "optionalClientScopes": []
     },
     {

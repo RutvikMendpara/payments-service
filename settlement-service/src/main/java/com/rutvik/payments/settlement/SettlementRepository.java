@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public class SettlementRepository {
 
-    private static final RowMapper<Settlement> ROW = (rs, i) -> new Settlement(
+    public static final RowMapper<Settlement> ROW = (rs, i) -> new Settlement(
             rs.getString("trade_id"), rs.getString("symbol"), rs.getLong("price"), rs.getLong("quantity"),
             rs.getString("buyer_id"), rs.getString("seller_id"),
             SettlementStatus.valueOf(rs.getString("status")), rs.getString("reason"), rs.getInt("attempts"),

@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Calls ledger-service. Retry wraps the circuit breaker (resilience4j's default aspect order),
@@ -49,6 +50,27 @@ public class LedgerClient {
                         throw new LedgerRequestRejectedException(status.value(), text);
                     }
                     throw new LedgerUnavailableException("ledger returned " + status.value());
+                });
+    }
+
+    /** Looks up what the ledger recorded under a key; empty if it never saw the request. */
+    @Retry(name = "ledger")
+    @CircuitBreaker(name = "ledger")
+    public Optional<LedgerResult> find(String idempotencyKey) {
+        return rest.get()
+                .uri(b -> b.path("/transactions").queryParam("idempotencyKey", idempotencyKey).build())
+                .exchange((request, response) -> {
+                    int status = response.getStatusCode().value();
+                    if (status == 200) {
+                        return Optional.of(response.bodyTo(LedgerResult.class));
+                    }
+                    if (status == 404) {
+                        return Optional.<LedgerResult>empty();
+                    }
+                    if (response.getStatusCode().is4xxClientError()) {
+                        throw new LedgerRequestRejectedException(status, "lookup refused");
+                    }
+                    throw new LedgerUnavailableException("ledger returned " + status);
                 });
     }
 }
