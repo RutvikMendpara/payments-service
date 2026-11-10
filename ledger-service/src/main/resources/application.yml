@@ -19,6 +19,13 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       properties:
         enable.idempotence: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # keys are fetched from inside the network, but tokens carry the public issuer
+          jwk-set-uri: ${JWK_SET_URI:http://localhost:8180/realms/payments/protocol/openid-connect/certs}
+          issuer-uri: ${JWT_ISSUER:http://localhost:8180/realms/payments}
   lifecycle:
     timeout-per-shutdown-phase: 20s
 

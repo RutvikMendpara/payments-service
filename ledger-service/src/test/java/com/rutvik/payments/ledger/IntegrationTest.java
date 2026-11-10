@@ -9,6 +9,11 @@ import com.rutvik.payments.ledger.posting.TransactionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.MockMvcBuilderCustomizer;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -20,11 +25,28 @@ import org.testcontainers.kafka.KafkaContainer;
 import java.util.List;
 import java.util.UUID;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
 /** Real Postgres and Kafka, started once per JVM and shared by every test class. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(IntegrationTest.ServiceToken.class)
 public abstract class IntegrationTest {
+
+    /** Unless a test says otherwise, requests carry a token with every ledger scope. */
+    @TestConfiguration
+    static class ServiceToken {
+        @Bean
+        MockMvcBuilderCustomizer allScopes() {
+            return builder -> builder.defaultRequest(get("/").with(jwt().authorities(
+                    new SimpleGrantedAuthority("SCOPE_ledger.read"),
+                    new SimpleGrantedAuthority("SCOPE_ledger.write"),
+                    new SimpleGrantedAuthority("SCOPE_ledger.post"),
+                    new SimpleGrantedAuthority("SCOPE_ledger.admin"))));
+        }
+    }
 
     @ServiceConnection
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
